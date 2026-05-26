@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Mindful Breathing</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    height:100vh;
+
+    overflow:hidden;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-family:'Poppins',sans-serif;
+
+    color:#1f2937;
+
+    text-align:center;
+
+    position:relative;
+
+    background: linear-gradient(135deg, #e0f7fa 0%, #b3e5fc 50%, #81d4fa 100%);
+
+}
+
+
+
+/* Main glass card */
+
+.container{
+
+    position:relative;
+
+    z-index:2;
+
+    width:90%;
+    max-width:430px;
+
+    padding:42px;
+
+    border-radius:36px;
+
+    background:rgba(255,255,255,0.25);
+
+    backdrop-filter:blur(18px);
+
+    box-shadow:
+    0 0 45px rgba(0,0,0,0.1),
+    inset 0 0 20px rgba(255,255,255,0.2);
+}
+
+
+
+/* Heading */
+
+h1{
+
+    font-size:44px;
+
+    font-weight:600;
+
+    margin-bottom:10px;
+
+    color:#0277bd;
+}
+
+
+
+.subtitle{
+
+    color:#01579b;
+
+    margin-bottom:28px;
+
+    line-height:1.6;
+
+    font-size:15px;
+}
+
+
+
+/* Orb area */
+
+.orb-wrapper{
+
+    height:340px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    overflow:visible;
+}
+
+
+
+/* Main breathing orb */
+
+#orb{
+
+    width:140px;
+    height:140px;
+
+    border-radius:50%;
+
+    background:
+    radial-gradient(circle at top, #4db8e8, #0097a7);
+
+    box-shadow:
+    0 0 40px rgba(13, 110, 253, 0.4),
+    0 0 90px rgba(6, 182, 212, 0.25);
+
+    transition:all 4s ease-in-out;
+
+}
+
+
+
+/* Expanded state */
+
+.expand{
+
+    transform:scale(2.15);
+
+    box-shadow:
+    0 0 80px rgba(13, 110, 253, 0.6),
+    0 0 160px rgba(6, 182, 212, 0.4);
+}
+
+
+
+/* Breathing text */
+
+#phase{
+
+    font-size:38px;
+
+    font-weight:600;
+
+    color:#0277bd;
+}
+
+
+
+#timer{
+
+    margin-top:12px;
+
+    font-size:30px;
+
+    color:#0277bd;
+}
+
+
+
+/* Session timer */
+
+#sessionTimer{
+
+    margin-top:12px;
+
+    font-size:16px;
+
+    color:#01579b;
+}
+
+
+
+/* Button */
+
+button{
+
+    margin-top:35px;
+
+    padding:16px 48px;
+
+    border:none;
+
+    border-radius:24px;
+
+    font-size:18px;
+
+    font-family:'Poppins',sans-serif;
+
+    font-weight:600;
+
+    color:white;
+
+    background:#0277bd;
+
+    cursor:pointer;
+
+    box-shadow:
+    0 10px 25px rgba(2, 119, 189, 0.3);
+
+    transition:0.3s;
+}
+
+
+
+button:hover{
+
+    transform:scale(1.05);
+
+    background:#01579b;
+}
+
+
+
+/* Footer */
+
+.footer{
+
+    margin-top:26px;
+
+    color:#01579b;
+
+    font-size:13px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Breathe</h1>
+
+    <div class="subtitle">
+        Slow your breath. Relax your body. Calm your thoughts.
+    </div>
+
+
+
+    <!-- Orb -->
+
+    <div class="orb-wrapper">
+
+        <div id="orb"></div>
+
+    </div>
+
+
+
+    <!-- Text -->
+
+    <div id="phase">
+
+        Ready
+
+    </div>
+
+
+
+    <div id="timer">
+
+        4
+
+    </div>
+
+
+
+    <!-- Session Timer -->
+
+    <div id="sessionTimer">
+
+        Session Time • 00:00
+
+    </div>
+
+
+
+    <!-- Button -->
+
+    <button onclick="toggleBreathing()" id="btn">
+
+        Start
+
+    </button>
+
+
+
+    <div class="footer">
+
+        Mindful Breathing Experience
+
+    </div>
+
+</div>
+
+
+
+<audio id="ambientAudio" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_d73998eae0.mp3" type="audio/mpeg">
+</audio>
+
+
+
+<script>
+
+let started = false;
+
+let phaseIndex = 0;
+
+let timerInterval;
+
+let sessionInterval;
+
+let totalSeconds = 0;
+
+
+
+/* Phases with durations */
+
+const phases = [
+
+    { name: "Inhale", duration: 4, action: "expand" },
+
+    { name: "Hold", duration: 4, action: "hold-expanded" },
+
+    { name: "Exhale", duration: 4, action: "contract" },
+
+    { name: "Hold", duration: 4, action: "hold-contracted" }
+
+];
+
+
+
+/* Elements */
+
+const phaseText = document.getElementById("phase");
+
+const timerText = document.getElementById("timer");
+
+const sessionTimer = document.getElementById("sessionTimer");
+
+const orb = document.getElementById("orb");
+
+const button = document.getElementById("btn");
+
+const ambientAudio = document.getElementById("ambientAudio");
+
+
+
+/* Calming water and light music ambience */
+
+function startCalmingSound(){
+
+    ambientAudio.volume = 0.3;
+
+    ambientAudio.play().catch(err => {
+        console.log("Audio autoplay prevented, will play on user interaction");
+    });
+}
+
+
+
+/* Stop sound */
+
+function stopCalmingSound(){
+
+    ambientAudio.pause();
+    ambientAudio.currentTime = 0;
+}
+
+
+
+/* Session timer */
+
+function startSessionTimer(){
+
+    sessionInterval = setInterval(() => {
+
+        totalSeconds++;
+
+        let mins = Math.floor(totalSeconds / 60);
+
+        let secs = totalSeconds % 60;
+
+        mins = mins < 10 ? "0" + mins : mins;
+
+        secs = secs < 10 ? "0" + secs : secs;
+
+        sessionTimer.innerHTML =
+        "Session Time • " + mins + ":" + secs;
+
+    },1000);
+}
+
+
+
+/* Start / Stop */
+
+function toggleBreathing(){
+
+    if(!started){
+
+        started = true;
+
+        button.innerHTML = "Stop";
+
+        totalSeconds = 0;
+
+        startCalmingSound();
+
+        startSessionTimer();
+
+        runPhase();
+
+    }else{
+
+        stopBreathing();
+    }
+}
+
+
+
+/* Stop */
+
+function stopBreathing(){
+
+    started = false;
+
+    clearInterval(timerInterval);
+
+    clearInterval(sessionInterval);
+
+    stopCalmingSound();
+
+
+
+    phaseText.innerHTML = "Paused";
+
+    timerText.innerHTML = "-";
+
+    button.innerHTML = "Start Again";
+
+    orb.classList.remove("expand");
+}
+
+
+
+/* Breathing logic */
+
+function runPhase(){
+
+    if(!started) return;
+
+
+
+    let currentPhase = phases[phaseIndex];
+
+
+
+    phaseText.innerHTML = currentPhase.name;
+
+
+
+    let seconds = currentPhase.duration;
+
+
+
+    timerText.innerHTML = seconds;
+
+
+
+    /* Apply breathing animation */
+
+    if(currentPhase.action === "expand"){
+
+        orb.classList.add("expand");
+
+    }
+
+    else if(currentPhase.action === "hold-expanded"){
+
+        orb.classList.add("expand");
+
+    }
+
+    else if(currentPhase.action === "contract"){
+
+        orb.classList.remove("expand");
+
+    }
+
+    else if(currentPhase.action === "hold-contracted"){
+
+        orb.classList.remove("expand");
+
+    }
+
+
+
+    timerInterval = setInterval(() => {
+
+
+
+        seconds--;
+
+
+
+        timerText.innerHTML = seconds;
+
+
+
+        if(seconds <= 0){
+
+
+
+            clearInterval(timerInterval);
+
+
+
+            phaseIndex++;
+
+
+
+            if(phaseIndex >= phases.length){
+
+                phaseIndex = 0;
+            }
+
+
+
+            runPhase();
+        }
+
+
+
+    },1000);
+}
+
+</script>
+
+</body>
+
+</html>
