@@ -240,6 +240,13 @@ button:hover{
     font-size:13px;
 }
 
+.sound-indicator {
+    margin-top: 15px;
+    font-size: 12px;
+    color: #01579b;
+    min-height: 20px;
+}
+
 </style>
 
 </head>
@@ -292,6 +299,9 @@ button:hover{
 
     </div>
 
+    <!-- Sound Indicator -->
+    <div class="sound-indicator" id="soundIndicator"></div>
+
 
 
     <!-- Button -->
@@ -314,8 +324,12 @@ button:hover{
 
 
 
-<audio id="ambientAudio" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_d73998eae0.mp3" type="audio/mpeg">
+<audio id="waterSound" loop preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_8ebce0330f.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="lightMusic" loop preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2024/01/01/audio_57b8f7dc01.mp3" type="audio/mpeg">
 </audio>
 
 
@@ -331,6 +345,10 @@ let timerInterval;
 let sessionInterval;
 
 let totalSeconds = 0;
+
+let waterAudio = document.getElementById('waterSound');
+let musicAudio = document.getElementById('lightMusic');
+let soundIndicator = document.getElementById('soundIndicator');
 
 
 
@@ -362,29 +380,44 @@ const orb = document.getElementById("orb");
 
 const button = document.getElementById("btn");
 
-const ambientAudio = document.getElementById("ambientAudio");
 
 
+/* Start ambient sounds */
 
-/* Calming water and light music ambience */
+function startAmbientSounds(){
 
-function startCalmingSound(){
+    // Set volume levels
+    waterAudio.volume = 0.4;
+    musicAudio.volume = 0.25;
 
-    ambientAudio.volume = 0.3;
+    // Play both sounds
+    const waterPromise = waterAudio.play().catch(err => {
+        console.log("Water sound autoplay prevented");
+        soundIndicator.innerHTML = "🔕 Click play in browser controls";
+    });
 
-    ambientAudio.play().catch(err => {
-        console.log("Audio autoplay prevented, will play on user interaction");
+    const musicPromise = musicAudio.play().catch(err => {
+        console.log("Music autoplay prevented");
+    });
+
+    Promise.all([waterPromise, musicPromise]).then(() => {
+        soundIndicator.innerHTML = "🔊 Sound: Water + Light Music";
+    }).catch(() => {
+        soundIndicator.innerHTML = "🔕 Enable audio autoplay";
     });
 }
 
 
 
-/* Stop sound */
+/* Stop sounds */
 
-function stopCalmingSound(){
+function stopAmbientSounds(){
 
-    ambientAudio.pause();
-    ambientAudio.currentTime = 0;
+    waterAudio.pause();
+    musicAudio.pause();
+    waterAudio.currentTime = 0;
+    musicAudio.currentTime = 0;
+    soundIndicator.innerHTML = "";
 }
 
 
@@ -425,7 +458,7 @@ function toggleBreathing(){
 
         totalSeconds = 0;
 
-        startCalmingSound();
+        startAmbientSounds();
 
         startSessionTimer();
 
@@ -449,7 +482,7 @@ function stopBreathing(){
 
     clearInterval(sessionInterval);
 
-    stopCalmingSound();
+    stopAmbientSounds();
 
 
 
